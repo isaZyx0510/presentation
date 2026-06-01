@@ -53,7 +53,7 @@ function addText(slide, text, x, y, w, h, opts = {}) {
   });
   sh.text = text;
   sh.text.fontSize = opts.size ?? 24;
-  sh.text.typeface = opts.face ?? "Microsoft YaHei";
+  sh.text.typeface = opts.face ?? "Aptos";
   sh.text.color = opts.color ?? C.ink;
   sh.text.bold = Boolean(opts.bold);
   sh.text.alignment = opts.align ?? "left";
@@ -64,7 +64,7 @@ function addText(slide, text, x, y, w, h, opts = {}) {
 
 function title(slide, text, kicker = "") {
   addText(slide, kicker, 54, 28, 620, 22, { size: 12, color: C.muted, bold: true });
-  addText(slide, text, 54, 52, 900, 54, { size: 31, bold: true, face: "Microsoft YaHei UI" });
+  addText(slide, text, 54, 52, 900, 54, { size: 31, bold: true, face: "Aptos Display" });
   addShape(slide, 54, 118, 112, 4, { fill: "#2563EB", line: line("#2563EB", 0) });
 }
 
@@ -94,7 +94,7 @@ function box(slide, label, x, y, w, h, kind = "process", opts = {}) {
   });
   sh.text = label;
   sh.text.fontSize = opts.size ?? 15;
-  sh.text.typeface = opts.face ?? "Microsoft YaHei";
+  sh.text.typeface = opts.face ?? "Aptos";
   sh.text.color = opts.color ?? C.ink;
   sh.text.bold = Boolean(opts.bold);
   sh.text.alignment = opts.align ?? "center";
@@ -147,7 +147,7 @@ function table(slide, rows, x, y, w, rowH, cols, opts = {}) {
         size: opts.size ?? 13,
         bold: r === 0,
         color: r === 0 ? C.ink : C.muted,
-        face: c === 0 && r > 0 ? "Aptos Mono" : "Microsoft YaHei",
+        face: c === 0 && r > 0 ? "Aptos Mono" : "Aptos",
       });
     }
   }
@@ -171,10 +171,9 @@ function baseSlide(n) {
   return slide;
 }
 
-// 1
 {
   const s = baseSlide(1);
-  addText(s, "NAFEncoderLSNet 架构", 64, 88, 720, 70, { size: 40, bold: true, face: "Microsoft YaHei UI" });
+  addText(s, "NAFEncoderLSNet Architecture", 64, 88, 780, 70, { size: 40, bold: true, face: "Aptos Display" });
   addText(s, "Encoder-only NAF backbone + LS recovery parameter heads", 68, 164, 780, 34, { size: 21, color: C.muted });
   const xs = [82, 315, 548, 781, 1014];
   const labels = [
@@ -188,36 +187,34 @@ function baseSlide(n) {
     box(s, l, xs[i], 318, 168, 96, i === 0 || i === 4 ? "input" : i === 1 ? "module" : i === 3 ? "head" : "process", { size: 15.5, bold: true });
     if (i < labels.length - 1) arrow(s, xs[i] + 174, 366, xs[i + 1] - 8, 366);
   });
-  addText(s, "讲述主线：不预测 G_hat，而是从压缩后的 bottleneck 直接估计物理参数，并交给 recoveryMode='ls_from_packed_theta' 做 LS 恢复。", 88, 520, 1035, 58, { size: 17, color: C.muted });
+  addText(s, "Narrative: the model does not predict G_hat. It estimates physical parameters directly from the compressed bottleneck and passes them to recoveryMode='ls_from_packed_theta' for LS recovery.", 88, 520, 1035, 58, { size: 17, color: C.muted });
 }
 
-// 2
 {
   const s = baseSlide(2);
-  title(s, "配置入口与物理范围", "Initialization");
+  title(s, "Configuration Inputs and Physical Ranges", "Initialization");
   table(s, [
-    ["变量", "来源", "用途"],
-    ["n_rx", "cfg.N_rx", "接收天线数量，决定 delta_rx 维度"],
-    ["l_eff", "cfg.L_eff", "有效路径数量，决定各 path head 维度"],
-    ["n_sc", "cfg.N_sc", "子载波数量，决定频率轴 soft-argmax 分辨率"],
-    ["in_ch", "input_adapter_dim(cfg)", "输入通道数，适配不同观测打包方式"],
-    ["base_ch / hidden / dropout", "cfg or default", "控制 encoder 宽度、MLP 宽度和正则化"],
+    ["Variable", "Source", "Purpose"],
+    ["n_rx", "cfg.N_rx", "Receiver count; determines delta_rx dimensionality"],
+    ["l_eff", "cfg.L_eff", "Effective path count; determines per-path head width"],
+    ["n_sc", "cfg.N_sc", "Subcarrier count; sets frequency-axis soft-argmax resolution"],
+    ["in_ch", "input_adapter_dim(cfg)", "Input channels for the configured observation packing"],
+    ["base_ch / hidden / dropout", "cfg or default", "Controls encoder width, MLP width, and regularization"],
   ], 74, 154, 560, 54, [0.28, 0.31, 0.41], { size: 12.7 });
   box(s, "_slope_bounds(bounds, scale, sign)", 742, 172, 330, 72, "module", { size: 18, bold: true });
   arrow(s, 906, 248, 906, 292);
   box(s, "mu_min / mu_max\nrelDelayRangeSec + subcarrierSpacingHz\nsign = -1", 710, 300, 392, 72, "process", { size: 14.5, bold: true });
   box(s, "rho_min / rho_max\ndopplerRangeHz + ofdmSymbolDuration_s\nsign = +1", 710, 394, 392, 72, "process", { size: 14.5, bold: true });
-  box(s, "delta_bound\nrxOffsetRangeSec 的最大绝对斜率", 710, 488, 392, 72, "process", { size: 14.5, bold: true });
+  box(s, "delta_bound\nmaximum absolute slope from rxOffsetRangeSec", 710, 488, 392, 72, "process", { size: 14.5, bold: true });
   notes(s, [
-    "所有 head 的输出先被约束到物理可解释范围，再做 gauge fix。",
-    "mu 和 delta 使用负号映射延迟斜率，rho 使用正号映射 Doppler 斜率。",
+    "Every head is first bounded to a physically interpretable range, then gauge-fixed.",
+    "mu and delta use the negative delay-slope mapping; rho uses the positive Doppler-slope mapping.",
   ], 76, 596, 780, { size: 14.5, gap: 30 });
 }
 
-// 3
 {
   const s = baseSlide(3);
-  title(s, "Encoder 主干", "Stem, downsampling, bottleneck");
+  title(s, "Encoder Backbone", "Stem, downsampling, bottleneck");
   const y = 240;
   const nodes = [
     ["x\nB x C_in x N_sc x T", "input", 84],
@@ -237,15 +234,14 @@ function baseSlide(n) {
   arrow(s, 496, 475, 540, 475);
   arrow(s, 740, 475, 784, 475);
   notes(s, [
-    "两次 stride=2 是各向同性下采样，频率轴和时间轴同时压缩。",
-    "当 T=2 时，第一次下采样后时间轴通常已经变成 1，因此 rho 不走时间 soft-argmax。",
+    "Both stride-2 operations are isotropic: frequency and time are compressed together.",
+    "With the current T=2 input, the time axis typically collapses to one bin after the first downsample, so rho uses an MLP instead of time-axis soft-argmax.",
   ], 86, 594, 970, { size: 15, gap: 30 });
 }
 
-// 4
 {
   const s = baseSlide(4);
-  title(s, "mu Head: 频率轴 Soft-Argmax", "Path delay slope");
+  title(s, "mu Head: Frequency-Axis Soft-Argmax", "Path delay slope");
   box(s, "bottleneck feature f\nB x 4C x H' x T'", 90, 238, 220, 84, "process", { size: 17, bold: true });
   box(s, "mu_proj\nConv1x1: 4C -> L_eff", 390, 238, 230, 84, "head", { size: 17, bold: true });
   box(s, "mean over time\nB x L_eff x H'", 700, 238, 230, 84, "process", { size: 17, bold: true });
@@ -259,10 +255,9 @@ function baseSlide(n) {
   arrow(s, 1114, 326, 454, 448, { color: "#64748B", width: 1.5 });
   arrow(s, 552, 489, 622, 489);
   arrow(s, 872, 489, 942, 489);
-  addText(s, "核心思想：每条 path 在压缩频率轴 H' 上形成一个概率分布，用期望值把离散位置映射为连续的 mu_abs。", 90, 586, 980, 46, { size: 16, color: C.muted });
+  addText(s, "Core idea: each path forms a probability distribution over the compressed frequency axis H'. The expected value maps the discrete location to continuous mu_abs.", 90, 586, 980, 46, { size: 16, color: C.muted });
 }
 
-// 5
 {
   const s = baseSlide(5);
   title(s, "rho / delta / alpha Heads", "Global pooled bottleneck");
@@ -280,13 +275,12 @@ function baseSlide(n) {
     arrow(s, x + 130, 378, x + 130, 408);
     arrow(s, x + 130, 500, x + 130, 530);
   });
-  addText(s, "rho 选择全局池化 MLP，是因为当前 T=2 时 bottleneck 时间轴会坍缩为单点；alpha 用 softplus 保证非负。", 90, 640, 1000, 28, { size: 15, color: C.muted });
+  addText(s, "rho uses a globally pooled MLP because the current T=2 setting collapses the bottleneck time axis to a single bin; alpha uses softplus to stay non-negative.", 90, 640, 1000, 28, { size: 15, color: C.muted });
 }
 
-// 6
 {
   const s = baseSlide(6);
-  title(s, "path_prob Head 与兼容性", "Optional existence probability");
+  title(s, "path_prob Head and Compatibility", "Optional existence probability");
   box(s, "cfg.usePathProbHead", 112, 186, 260, 78, "module", { size: 20, bold: true });
   box(s, "True\npath_prob_head MLP\n4C -> hidden -> L_eff", 482, 154, 330, 96, "head", { size: 17, bold: true });
   box(s, "False\nones(B, L_eff)", 482, 304, 330, 78, "process", { size: 18, bold: true });
@@ -296,16 +290,15 @@ function baseSlide(n) {
   arrow(s, 818, 202, 918, 262);
   arrow(s, 818, 342, 918, 286);
   notes(s, [
-    "默认关闭时保持旧 checkpoint 可加载：模型没有 path_prob_head 权重，也不会出现 missing key。",
-    "开启时每条 path 额外学习一个存在概率，经过 sigmoid 限制在 0 到 1。",
-    "关闭时等价于 legacy 行为：所有 L_eff 条 path 都被认为存在。",
+    "Default-off behavior preserves old checkpoint loading: there are no path_prob_head weights and no missing-key mismatch.",
+    "When enabled, each path learns an additional existence probability constrained to [0, 1] by sigmoid.",
+    "When disabled, the behavior matches the legacy path: all L_eff paths are treated as present.",
   ], 124, 472, 940, { size: 16, gap: 40 });
 }
 
-// 7
 {
   const s = baseSlide(7);
-  title(s, "Forward Pass 汇总", "Runtime data flow");
+  title(s, "Forward Pass Summary", "Runtime data flow");
   const nodes = [
     ["shape check\nx.ndim == 4", 82, 190, "input"],
     ["encode\nstem -> stage1 -> down1 -> stage2 -> down2 -> bottleneck", 310, 190, "module"],
@@ -322,22 +315,21 @@ function baseSlide(n) {
   arrow(s, 966, 280, 430, 390, { color: "#64748B", width: 1.5 });
   arrow(s, 966, 280, 798, 378, { color: "#64748B", width: 1.5 });
   arrow(s, 966, 280, 798, 482, { color: "#64748B", width: 1.5 });
-  addText(s, "返回值严格匹配 detr_path_dict 的 modelOutputMode contract；forward 不输出 G_hat。", 82, 616, 980, 28, { size: 16, color: C.muted });
+  addText(s, "The return value matches the detr_path_dict modelOutputMode contract; forward does not output G_hat.", 82, 616, 980, 28, { size: 16, color: C.muted });
 }
 
-// 8
 {
   const s = baseSlide(8);
-  title(s, "输出接口与 LS Recovery", "Closing view");
+  title(s, "Output Interface and LS Recovery", "Closing view");
   table(s, [
     ["Field", "Shape", "Meaning"],
-    ["theta.mu0", "B x 1", "mu 的参考项"],
-    ["theta.rho0", "B x 1", "rho 的参考项"],
-    ["theta.delta_rx", "B x N_rx", "接收端相对 offset"],
-    ["theta.mu_rel", "B x L_eff", "相对 delay slope"],
-    ["theta.rho_rel", "B x L_eff", "相对 Doppler slope"],
-    ["alpha", "B x L_eff", "非负路径强度"],
-    ["path_prob", "B x L_eff", "路径存在概率或全 1 legacy fallback"],
+    ["theta.mu0", "B x 1", "Reference term for mu"],
+    ["theta.rho0", "B x 1", "Reference term for rho"],
+    ["theta.delta_rx", "B x N_rx", "Receiver-side relative offset"],
+    ["theta.mu_rel", "B x L_eff", "Relative delay slope"],
+    ["theta.rho_rel", "B x L_eff", "Relative Doppler slope"],
+    ["alpha", "B x L_eff", "Non-negative path strength"],
+    ["path_prob", "B x L_eff", "Path existence probability or all-ones legacy fallback"],
   ], 86, 154, 620, 48, [0.28, 0.22, 0.5], { size: 13 });
   box(s, "recoveryMode\n'ls_from_packed_theta'", 802, 204, 300, 78, "module", { size: 18, bold: true });
   box(s, "No G_hat branch\nencoder estimates physical theta only", 802, 336, 300, 78, "note", { size: 17, bold: true, lineStyle: "dash" });
@@ -345,8 +337,8 @@ function baseSlide(n) {
   arrow(s, 952, 286, 952, 330);
   arrow(s, 952, 418, 952, 462);
   notes(s, [
-    "这页可作为代码讲解的收束：网络负责物理参数估计，恢复步骤交给 LS。",
-    "重点强调 gauge-fixed theta 与 alpha/path_prob 是后续恢复的接口。",
+    "Use this slide to close the code walkthrough: the network estimates physical parameters, while LS handles recovery.",
+    "The main downstream interface is gauge-fixed theta together with alpha and path_prob.",
   ], 90, 612, 820, { size: 14.5, gap: 30 });
 }
 
